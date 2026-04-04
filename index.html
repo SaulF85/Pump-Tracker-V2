@@ -259,12 +259,10 @@
 </div>
 
 <script>
-const STORAGE_KEY = "frac_pump_tracker_v3_single_layout";
+const STORAGE_KEY = "frac_pump_tracker_v4_single_layout_reset_all";
 const mainStations = 24;
 const standbySlots = 6;
 const pumpCount = mainStations + standbySlots;
-
-/* Seats and valves lowered to 80 hours */
 const THRESH = { seat: 80, valve: 80, hardPacking: 150, softPacking: 150, fuelFilter: 150 };
 const WARN_WINDOW = 20;
 
@@ -630,6 +628,48 @@ function resetItem(pumpId, group, idx){
   render();
 }
 
+function resetAllGroup(pumpId, group){
+  const p = findPump(pumpId);
+  if(!p) return;
+
+  const label = group === "seats" ? "Seats" : group === "valves" ? "Valves" : group;
+  const count = p[group]?.length || 0;
+  if(!count) return;
+
+  const ok = confirm(`Are you sure you want to reset ALL ${label} on Pump ${p.id}?`);
+  if(!ok) return;
+
+  const by = prompt(`Who reset ALL ${label} on Pump ${p.id}?`, "") || "";
+  const comment = prompt(`Comment for resetting all ${label}:`, "") || "";
+  const ts = Date.now();
+
+  p[group].forEach((it) => {
+    it.hours = 0;
+    it.lastChangedBy = by.trim();
+    it.lastChangedAt = ts;
+    it.lastComment = comment.trim();
+  });
+
+  if(group === "seats") state.shift.seats += p[group].length;
+  if(group === "valves") state.shift.valves += p[group].length;
+  if(group === "hardPackings") state.shift.hardPackings += p[group].length;
+  if(group === "softPackings") state.shift.softPackings += p[group].length;
+  if(group === "fuelFilters") state.shift.fuelFilters += p[group].length;
+
+  p.shiftCounts[group] += p[group].length;
+
+  addPumpEvent(
+    p.id,
+    "MAINT_RESET_ALL",
+    by,
+    `All ${label} reset${comment ? " — " + comment : ""}`,
+    { group, count: p[group].length }
+  );
+
+  save();
+  render();
+}
+
 let dragPumpId = null;
 
 function onDragStart(pumpId){ dragPumpId = pumpId; }
@@ -790,6 +830,13 @@ function warningClass(p){
 }
 
 function renderComponentList(p, group, title){
+  const bulkButtons = `
+    <div class="row" style="margin-bottom:8px;">
+      ${group === "seats" ? `<button onclick="resetAllGroup(${p.id}, 'seats')">Reset All Seats</button>` : ""}
+      ${group === "valves" ? `<button onclick="resetAllGroup(${p.id}, 'valves')">Reset All Valves</button>` : ""}
+    </div>
+  `;
+
   const items = p[group].map((it, idx) => `
     <div class="item">
       <div class="left">
@@ -807,6 +854,7 @@ function renderComponentList(p, group, title){
   return `
     <div class="maint-panel">
       <div class="box-title">${title}</div>
+      ${bulkButtons}
       ${items}
     </div>
   `;
