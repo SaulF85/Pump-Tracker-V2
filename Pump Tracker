@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Frac Pump Tracker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#fff; padding:16px; }
+    h1 { text-align:center; margin:6px 0 2px; }
+    .sub { text-align:center; color:#bbb; margin:0 0 12px; font-size:13px; }
+
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      justify-content:center;
+      margin-bottom:12px;
+    }
+    button, select{
+      padding:7px 10px;
+      cursor:pointer;
+      border-radius:8px;
+      border:1px solid #444;
+      background:#222; color:#fff;
+      font-size:12px;
+    }
+    button:hover, select:hover{ background:#2a2a2a; }
+
+    .top-panels{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .panel{
+      background:#151515;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:10px;
+    }
+    .panel h3{ margin:0 0 8px 0; font-size:14px; }
+    .kv{ display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#ddd; }
+    .kv span{ background:#1e1e1e; border:1px solid #2a2a2a; padding:6px 8px; border-radius:10px; }
+    .muted{ color:#aaa; }
+
+    .stations-wrap{
+      background:#151515;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:12px;
+    }
+
+    .stations{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+
+    .station{
+      background:#1a1a1a;
+      border:1px solid #2a2a2a;
+      border-radius:12px;
+      padding:10px;
+      min-height:190px;
+    }
+
+    .station-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .station-title{
+      font-weight:bold;
+      font-size:13px;
+      line-height:1.2;
+    }
+    .station-meta{
+      font-size:11px;
+      color:#888;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .station-current{
+      margin-top:4px;
+      font-size:11px;
+      color:#aaa;
+    }
+
+    .station-name-input, .pump-name-input, .move-select, .comment-textarea{
+      width:100%;
+      padding:6px 8px;
+      border-radius:10px;
+      border:1px solid #333;
+      background:#101010;
+      color:#fff;
+      font-size:12px;
+      margin:8px 0 8px;
+      box-sizing:border-box;
+    }
+    .comment-textarea{ min-height:62px; resize:vertical; }
+
+    .dropzone{
+      border:1px dashed #444;
+      border-radius:10px;
+      padding:8px;
+      min-height:110px;
+      background:#141414;
+    }
+    .dropzone.dragover{
+      border-color:#66ff66;
+      background:#101810;
+    }
+
+    .pump-card{
+      background:#1e1e1e;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:10px;
+      font-size:12px;
+      user-select:none;
+    }
+    .pump-card.running{ border:2px solid lime; }
+    .pump-card.offline{ border:2px solid #ffcc00; }
+    .pump-card.pulled{ border:2px solid #ff4d4d; }
+
+    .pump-card.warnsoon{ box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.6) inset; }
+    .pump-card.warnover{ box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.7) inset; }
+
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+    .tiny{ font-size:11px; color:#aaa; }
+
+    .maint{
+      margin-top:10px;
+      background:#141414;
+      border:1px solid #2a2a2a;
+      border-radius:12px;
+      padding:8px;
+    }
+    .maint-header{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .maint-panel{
+      margin-top:8px;
+      background:#121212;
+      border:1px solid #2a2a2a;
+      border-radius:10px;
+      padding:8px;
+    }
+    .box-title{ font-weight:bold; margin-bottom:6px; font-size:12px; }
+
+    .item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      padding:6px 0;
+      border-bottom:1px solid #222;
+    }
+    .item:last-child{ border-bottom:none; }
+    .left{ display:flex; align-items:center; gap:8px; min-width:0; }
+    .name{
+      max-width:130px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    input[type="checkbox"]{ transform: scale(1.1); cursor:pointer; }
+    .item button{ margin:0; padding:4px 8px; font-size:11px; }
+
+    .comment-box{
+      margin-top:10px;
+      background:#141414;
+      border:1px solid #2a2a2a;
+      border-radius:12px;
+      padding:8px;
+    }
+    .major-flag{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-top:8px;
+      color:#ff9d9d;
+    }
+
+    .logbox{
+      margin-top:10px;
+      background:#141414;
+      border:1px solid #2a2a2a;
+      border-radius:12px;
+      padding:8px;
+      max-height:140px;
+      overflow:auto;
+    }
+    .logline{
+      font-size:11px;
+      color:#bbb;
+      border-bottom:1px solid #222;
+      padding:6px 0;
+    }
+    .logline:last-child{ border-bottom:none; }
+
+    .footer{
+      margin-top:10px;
+      text-align:center;
+      color:#777;
+      font-size:11px;
+    }
+
+    @media (max-width: 1200px){
+      .stations{ grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px){
+      .top-panels{ grid-template-columns: 1fr; }
+      .stations{ grid-template-columns: 1fr; }
+      .name{ max-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Frac Pump Tracker</h1>
+<div class="sub">10 seats • 10 valves • hard/soft packings • 6 fuel filters • single station layout • seats/valves warning at 80 hours</div>
+
+<div class="toolbar">
+  <button onclick="startAll()">Start ALL</button>
+  <button onclick="stopAll()">Stop ALL</button>
+  <button onclick="stagePrev()">Stage -</button>
+  <button onclick="stageNext()">Stage +</button>
+  <button onclick="stageNote()">Stage Note</button>
+  <button onclick="exportCSV()">Export CSV (Excel)</button>
+  <button onclick="exportLogsCSV()">Export LOGS CSV</button>
+  <button onclick="resetAllData()">Reset ALL Data</button>
+</div>
+
+<div class="top-panels">
+  <div class="panel">
+    <h3>Tracker Summary</h3>
+    <div class="kv" id="shiftSummary"></div>
+    <div class="tiny muted" id="shiftMeta"></div>
+  </div>
+  <div class="panel">
+    <h3>Stage</h3>
+    <div class="kv" id="stageSummary"></div>
+    <div class="tiny muted" id="stageMeta"></div>
+  </div>
+</div>
+
+<div class="stations-wrap">
+  <div class="stations" id="allStations"></div>
+</div>
+
+<div class="footer">
+  Fixed station numbers stay in place. Pump names move with the pump. Comments are saved with stage number. Major issue comments export with a red-highlight marker column.
+</div>
+
+<script>
+const STORAGE_KEY = "frac_pump_tracker_v3_single_layout";
+const mainStations = 24;
+const standbySlots = 6;
+const pumpCount = mainStations + standbySlots;
+
+/* Seats and valves lowered to 80 hours */
+const THRESH = { seat: 80, valve: 80, hardPacking: 150, softPacking: 150, fuelFilter: 150 };
+const WARN_WINDOW = 20;
+
+function createItems(label, count){
+  return Array.from({length: count}, (_, i) => ({
+    name: `${label} ${i+1}`,
+    hours: 0,
+    active: true,
+    lastChangedBy: "",
+    lastChangedAt: null,
+    lastComment: ""
+  }));
+}
+
+function createPump(id){
+  return {
+    id,
+    pumpName: "",
+    totalHours: 0,
+    running: false,
+    lastStart: null,
+    status: "Stopped",
+    statusBy: "",
+    statusComment: "",
+    statusAt: null,
+    stationKey: null,
+    shiftCounts: { seats: 0, valves: 0, hardPackings: 0, softPackings: 0, fuelFilters: 0 },
+    uiSelection: "seats",
+    currentComment: "",
+    currentCommentMajor: false,
+    seats: createItems("Seat", 10),
+    valves: createItems("Valve", 10),
+    hardPackings: createItems("Hard Packing", 5),
+    softPackings: createItems("Soft Packing", 5),
+    fuelFilters: createItems("Fuel Filter", 6),
+    events: []
+  };
+}
+
+function createStations(){
+  const main = Array.from({length: mainStations}, (_, i) => ({
+    key: `S${i+1}`,
+    stationNum: i + 1,
+    name: `Station ${i+1}`,
+    pumpId: i + 1
+  }));
+
+  const standby = Array.from({length: standbySlots}, (_, i) => ({
+    key: `SB${i+1}`,
+    stationNum: null,
+    name: `Standby ${i+1}`,
+    pumpId: mainStations + i + 1
+  }));
+
+  return { main, standby };
+}
+
+let state = {
+  pumps: Array.from({length: pumpCount}, (_, i) => createPump(i+1)),
+  stations: createStations(),
+  stage: { number: 1, notes: [] },
+  shift: { startedAt: Date.now(), seats: 0, valves: 0, hardPackings: 0, softPackings: 0, fuelFilters: 0 },
+  globalEvents: []
+};
+
+function save(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){ console.warn(e); }
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.pumps) || !parsed.stations) return;
+    state = parsed;
+
+    if(!state.stations.main) state.stations = createStations();
+    state.stage ??= { number: 1, notes: [] };
+    state.stage.notes ??= [];
+    state.shift ??= { startedAt: Date.now(), seats: 0, valves: 0, hardPackings: 0, softPackings: 0, fuelFilters: 0 };
+    state.globalEvents ??= [];
+
+    if(!Array.isArray(state.pumps) || state.pumps.length !== pumpCount){
+      const rebuilt = Array.from({length: pumpCount}, (_, i) => createPump(i+1));
+      if(Array.isArray(state.pumps)){
+        for(let i=0; i<Math.min(state.pumps.length, rebuilt.length); i++) rebuilt[i] = Object.assign(rebuilt[i], state.pumps[i]);
+      }
+      state.pumps = rebuilt;
+    }
+
+    state.pumps.forEach((p, idx) => {
+      p.id ??= idx+1;
+      p.pumpName ??= "";
+      p.totalHours ??= 0;
+      p.running ??= false;
+      p.lastStart ??= null;
+      p.status ??= "Stopped";
+      p.statusBy ??= "";
+      p.statusComment ??= "";
+      p.statusAt ??= null;
+      p.stationKey ??= null;
+      p.shiftCounts ??= { seats: 0, valves: 0, hardPackings: 0, softPackings: 0, fuelFilters: 0 };
+      p.uiSelection ??= "seats";
+      p.currentComment ??= "";
+      p.currentCommentMajor ??= false;
+      p.seats = patchItems(p.seats, "Seat", 10);
+      p.valves = patchItems(p.valves, "Valve", 10);
+      p.hardPackings = patchItems(p.hardPackings, "Hard Packing", 5);
+      p.softPackings = patchItems(p.softPackings, "Soft Packing", 5);
+      p.fuelFilters = patchItems(p.fuelFilters, "Fuel Filter", 6);
+      p.events ??= [];
+    });
+  }catch(e){ console.warn(e); }
+}
+
+function patchItems(arr, label, count){
+  if(!Array.isArray(arr) || arr.length !== count) return createItems(label, count);
+  arr.forEach((it, i) => {
+    it.name ??= `${label} ${i+1}`;
+    it.hours ??= 0;
+    it.active = (it.active !== false);
+    it.lastChangedBy ??= "";
+    it.lastChangedAt ??= null;
+    it.lastComment ??= "";
+  });
+  return arr;
+}
+
+function fmt(h){ return (Math.round(h * 100) / 100).toFixed(2); }
+function nowStr(ts){ return new Date(ts).toLocaleString(); }
+function allStations(){ return [...state.stations.main, ...state.stations.standby]; }
+function findStationByKey(key){ return allStations().find(s => s.key === key); }
+function findPump(id){ return state.pumps.find(p => p.id === id); }
+
+function currentTotal(p){
+  if(!p.running) return p.totalHours;
+  return p.totalHours + (Date.now() - p.lastStart) / (1000*60*60);
+}
+
+function addRunHours(p, hours){
+  p.totalHours += hours;
+  p.seats.forEach(x => { if(x.active) x.hours += hours; });
+  p.valves.forEach(x => { if(x.active) x.hours += hours; });
+  p.hardPackings.forEach(x => { if(x.active) x.hours += hours; });
+  p.softPackings.forEach(x => { if(x.active) x.hours += hours; });
+  p.fuelFilters.forEach(x => { if(x.active) x.hours += hours; });
+}
+
+function classifyMaintenance(p){
+  let overdue = 0, soon = 0;
+  const check = (it, thresh) => {
+    if(!it.active) return;
+    const rem = thresh - it.hours;
+    if(rem <= 0) overdue++;
+    else if(rem <= WARN_WINDOW) soon++;
+  };
+  p.seats.forEach(it => check(it, THRESH.seat));
+  p.valves.forEach(it => check(it, THRESH.valve));
+  p.hardPackings.forEach(it => check(it, THRESH.hardPacking));
+  p.softPackings.forEach(it => check(it, THRESH.softPacking));
+  p.fuelFilters.forEach(it => check(it, THRESH.fuelFilter));
+  return { overdue, soon };
+}
+
+function addPumpEvent(pumpId, type, by, comment, details={}){
+  const p = findPump(pumpId);
+  if(!p) return;
+  p.events.unshift({ ts: Date.now(), stage: state.stage.number, type, by: (by||"").trim(), comment: (comment||"").trim(), details });
+  if(p.events.length > 400) p.events.pop();
+}
+
+function addGlobalEvent(type, by, comment, details={}){
+  state.globalEvents.unshift({ ts: Date.now(), stage: state.stage.number, type, by: (by||"").trim(), comment: (comment||"").trim(), details });
+  if(state.globalEvents.length > 500) state.globalEvents.pop();
+}
+
+function stageNext(){
+  const by = prompt("Who changed the stage?", "") || "";
+  state.stage.number += 1;
+  addGlobalEvent("STAGE_CHANGE", by, `Stage -> ${state.stage.number}`, {});
+  save();
+  render();
+}
+
+function stagePrev(){
+  const by = prompt("Who changed the stage?", "") || "";
+  state.stage.number = Math.max(1, state.stage.number - 1);
+  addGlobalEvent("STAGE_CHANGE", by, `Stage -> ${state.stage.number}`, {});
+  save();
+  render();
+}
+
+function stageNote(){
+  const by = prompt("Who is adding the stage note?", "") || "";
+  const note = prompt(`Stage ${state.stage.number} note:`, "") || "";
+  if(!note.trim()) return;
+  state.stage.notes.unshift({ ts: Date.now(), stage: state.stage.number, by: by.trim(), comment: note.trim() });
+  addGlobalEvent("STAGE_NOTE", by, note, {});
+  save();
+  render();
+}
+
+function editPumpName(pumpId, name){
+  const p = findPump(pumpId); if(!p) return;
+  p.pumpName = name;
+  save();
+  const st = findStationByKey(p.stationKey);
+  if(st){
+    const el = document.getElementById(`currentPump-${st.key}`);
+    if(el) el.textContent = p.pumpName ? p.pumpName : `Pump ${p.id}`;
+  }
+}
+
+function editStationName(stationKey, newName){
+  const s = findStationByKey(stationKey);
+  if(!s) return;
+  s.name = newName;
+  save();
+}
+
+function setMaintenanceView(pumpId, value){
+  const p = findPump(pumpId);
+  if(!p) return;
+  p.uiSelection = value;
+  save();
+  render();
+}
+
+function updateCurrentComment(pumpId, text){
+  const p = findPump(pumpId);
+  if(!p) return;
+  p.currentComment = text;
+  save();
+}
+
+function updateCurrentCommentMajor(pumpId, checked){
+  const p = findPump(pumpId);
+  if(!p) return;
+  p.currentCommentMajor = checked;
+  save();
+}
+
+function startPumpById(id){
+  const p = findPump(id); if(!p) return;
+  if(p.status === "Offline" || p.status === "PulledOut") return;
+  if(p.running) return;
+  p.running = true;
+  p.lastStart = Date.now();
+  p.status = "Running";
+  addPumpEvent(p.id, "START", "", "", {});
+}
+
+function stopPumpById(id){
+  const p = findPump(id); if(!p) return;
+  if(!p.running){
+    if(p.status === "Running") p.status = "Stopped";
+    return;
+  }
+  const hours = (Date.now() - p.lastStart) / (1000*60*60);
+  addRunHours(p, hours);
+  p.running = false;
+  p.lastStart = null;
+  if(p.status === "Running") p.status = "Stopped";
+  addPumpEvent(p.id, "STOP", "", `+${fmt(hours)} hrs`, { addedHours: hours });
+}
+
+function startAll(){
+  state.pumps.forEach(p => {
+    if(p.status !== "Offline" && p.status !== "PulledOut") startPumpById(p.id);
+  });
+  save();
+  render();
+}
+
+function stopAll(){
+  state.pumps.forEach(p => stopPumpById(p.id));
+  save();
+  render();
+}
+
+function saveCommentOnly(pumpId){
+  const p = findPump(pumpId); if(!p) return;
+  const by = prompt(`Who is saving this comment for Pump ${p.id}?`, "") || "";
+  if(!p.currentComment.trim()) return;
+  addPumpEvent(p.id, "COMMENT", by, p.currentComment, { major: !!p.currentCommentMajor });
+  if(p.currentCommentMajor){ p.statusComment = p.currentComment; }
+  p.currentComment = "";
+  p.currentCommentMajor = false;
+  save();
+  render();
+}
+
+function setStatus(pumpId, status){
+  const p = findPump(pumpId); if(!p) return;
+
+  if(p.running && status !== "Running") stopPumpById(p.id);
+
+  const by = prompt(`Who is setting Pump ${p.id} to ${status}?`, p.statusBy || "") || "";
+  let comment = "";
+  let major = false;
+
+  if(status === "Offline" || status === "PulledOut"){
+    comment = prompt(`Reason/comment for Pump ${p.id} (${status}):`, p.currentComment || "") || "";
+    major = confirm("Is this a major issue? Click OK for yes, Cancel for no.");
+  } else if(status === "Stopped"){
+    comment = prompt(`Optional comment for Pump ${p.id} -> Stopped:`, "") || "";
+  }
+
+  p.status = status;
+  p.statusBy = by.trim();
+  p.statusComment = comment.trim();
+  p.statusAt = Date.now();
+
+  addPumpEvent(p.id, "STATUS", by, `${status}${comment ? " — " + comment : ""}`, { status, majorIssue: major });
+
+  if(status === "Running") startPumpById(p.id);
+
+  save();
+  render();
+}
+
+function backOnline(pumpId){
+  const p = findPump(pumpId); if(!p) return;
+  const by = prompt(`Who is putting Pump ${p.id} back online?`, "") || "";
+  p.status = "Stopped";
+  p.statusBy = by.trim();
+  p.statusComment = "";
+  p.statusAt = Date.now();
+  addPumpEvent(p.id, "BACK_ONLINE", by, "Back online", {});
+  save();
+  render();
+}
+
+function toggleActive(pumpId, group, idx, checked){
+  const p = findPump(pumpId); if(!p) return;
+  p[group][idx].active = checked;
+  save();
+  render();
+}
+
+function incShiftCounter(group){
+  if(group === "seats") state.shift.seats += 1;
+  if(group === "valves") state.shift.valves += 1;
+  if(group === "hardPackings") state.shift.hardPackings += 1;
+  if(group === "softPackings") state.shift.softPackings += 1;
+  if(group === "fuelFilters") state.shift.fuelFilters += 1;
+}
+
+function resetItem(pumpId, group, idx){
+  const p = findPump(pumpId); if(!p) return;
+  const it = p[group][idx];
+  const by = prompt(`Who changed ${it.name} on Pump ${p.id}?`, "") || "";
+  const comment = prompt(`Comment for ${it.name}:`, it.lastComment || p.currentComment || "") || "";
+  it.hours = 0;
+  it.lastChangedBy = by.trim();
+  it.lastChangedAt = Date.now();
+  it.lastComment = comment.trim();
+  incShiftCounter(group);
+  p.shiftCounts[group] += 1;
+  addPumpEvent(p.id, "MAINT_RESET", by, `${group} ${it.name} reset — ${it.lastComment}`, { group, item: it.name });
+  save();
+  render();
+}
+
+let dragPumpId = null;
+
+function onDragStart(pumpId){ dragPumpId = pumpId; }
+function onDragEnd(){ dragPumpId = null; }
+function onDragOver(ev){ ev.preventDefault(); ev.currentTarget.classList.add("dragover"); }
+function onDragLeave(ev){ ev.currentTarget.classList.remove("dragover"); }
+
+function movePumpToStation(pumpId, stationKey){
+  const movingPump = findPump(Number(pumpId));
+  const targetStation = findStationByKey(stationKey);
+  if(!movingPump || !targetStation) return;
+
+  const currentStation = findStationByKey(movingPump.stationKey);
+  const targetPumpId = targetStation.pumpId;
+
+  if(targetPumpId && targetPumpId !== movingPump.id){
+    const targetPump = findPump(targetPumpId);
+    addPumpEvent(targetPump.id, "MOVE", "", `Moved (swap) to ${currentStation ? currentStation.key : "unassigned"}`, { from: targetStation.key, to: currentStation ? currentStation.key : "" });
+    if(currentStation){
+      targetPump.stationKey = currentStation.key;
+      currentStation.pumpId = targetPump.id;
+    }
+  }
+
+  addPumpEvent(movingPump.id, "MOVE", "", `Moved to ${targetStation.key}`, { from: movingPump.stationKey, to: targetStation.key });
+  movingPump.stationKey = targetStation.key;
+  targetStation.pumpId = movingPump.id;
+
+  if(currentStation && currentStation.key !== targetStation.key){
+    if(targetPumpId && targetPumpId !== movingPump.id){
+    } else {
+      currentStation.pumpId = null;
+    }
+  }
+
+  save();
+  render();
+}
+
+function onDrop(ev, stationKey){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove("dragover");
+  if(!dragPumpId) return;
+  movePumpToStation(dragPumpId, stationKey);
+}
+
+function csvEscape(val){
+  const s = String(val ?? "");
+  if(/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function exportCSV(){
+  const rows = [];
+  rows.push([
+    "Stage","TrackingStartedAt","SeatChanges","ValveChanges","HardPackingChanges","SoftPackingChanges","FuelFilterChanges",
+    "StationNum","StationKey","StationName","PumpID","PumpName","Status","StatusBy","StatusAt","StatusComment",
+    "MajorIssueFlag","ExcelHighlightRed","TotalPumpHours","PumpSeatChanges","PumpValveChanges","PumpHardPackingChanges","PumpSoftPackingChanges","PumpFuelFilterChanges",
+    ...Array.from({length:10}, (_,i)=>`Seat${i+1}Hours`),
+    ...Array.from({length:10}, (_,i)=>`Valve${i+1}Hours`),
+    ...Array.from({length:5}, (_,i)=>`HardPacking${i+1}Hours`),
+    ...Array.from({length:5}, (_,i)=>`SoftPacking${i+1}Hours`),
+    ...Array.from({length:6}, (_,i)=>`FuelFilter${i+1}Hours`)
+  ]);
+
+  state.pumps.forEach(p => {
+    const st = findStationByKey(p.stationKey);
+    const lastMajor = p.events.find(e => e.details && e.details.majorIssue === true);
+    const row = [
+      state.stage.number,
+      nowStr(state.shift.startedAt),
+      state.shift.seats,
+      state.shift.valves,
+      state.shift.hardPackings,
+      state.shift.softPackings,
+      state.shift.fuelFilters,
+      st?.stationNum ?? "",
+      st?.key ?? p.stationKey,
+      st?.name ?? "",
+      p.id,
+      p.pumpName || "",
+      p.status,
+      p.statusBy || "",
+      p.statusAt ? nowStr(p.statusAt) : "",
+      p.statusComment || "",
+      lastMajor ? "YES" : "NO",
+      lastMajor ? "RED" : "",
+      fmt(currentTotal(p)),
+      p.shiftCounts.seats,
+      p.shiftCounts.valves,
+      p.shiftCounts.hardPackings,
+      p.shiftCounts.softPackings,
+      p.shiftCounts.fuelFilters
+    ];
+    p.seats.forEach(it => row.push(fmt(it.hours)));
+    p.valves.forEach(it => row.push(fmt(it.hours)));
+    p.hardPackings.forEach(it => row.push(fmt(it.hours)));
+    p.softPackings.forEach(it => row.push(fmt(it.hours)));
+    p.fuelFilters.forEach(it => row.push(fmt(it.hours)));
+    rows.push(row);
+  });
+
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pump-tracker-export-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportLogsCSV(){
+  const rows = [["PumpID","PumpName","StationKey","Stage","Time","Type","By","Comment","MajorIssueFlag","DetailsJSON"]];
+  state.pumps.forEach(p => {
+    p.events.forEach(e => {
+      rows.push([
+        p.id,
+        p.pumpName || "",
+        p.stationKey || "",
+        e.stage,
+        nowStr(e.ts),
+        e.type,
+        e.by || "",
+        e.comment || "",
+        (e.details && e.details.majorIssue) ? "YES" : "NO",
+        JSON.stringify(e.details || {})
+      ]);
+    });
+  });
+
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pump-tracker-logs-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function statusClass(p){
+  if(p.status === "Running") return "running";
+  if(p.status === "Offline") return "offline";
+  if(p.status === "PulledOut") return "pulled";
+  return "";
+}
+
+function warningClass(p){
+  const w = classifyMaintenance(p);
+  if(w.overdue > 0) return "warnover";
+  if(w.soon > 0) return "warnsoon";
+  return "";
+}
+
+function renderComponentList(p, group, title){
+  const items = p[group].map((it, idx) => `
+    <div class="item">
+      <div class="left">
+        <input type="checkbox" ${it.active ? "checked" : ""} onchange="toggleActive(${p.id}, '${group}', ${idx}, this.checked)">
+        <div class="name">${it.name}</div>
+        <div class="tiny">${fmt(it.hours)}h</div>
+      </div>
+      <button onclick="resetItem(${p.id}, '${group}', ${idx})">Reset</button>
+    </div>
+    <div class="tiny muted" style="margin:-2px 0 6px 28px;">
+      ${it.lastChangedAt ? `last: ${it.lastChangedBy || "?"} @ ${nowStr(it.lastChangedAt)}` : ""}${it.lastComment ? ` • note: ${it.lastComment}` : ""}
+    </div>
+  `).join("");
+
+  return `
+    <div class="maint-panel">
+      <div class="box-title">${title}</div>
+      ${items}
+    </div>
+  `;
+}
+
+function renderSelectedMaintenance(p){
+  if(p.uiSelection === "seats") return renderComponentList(p, "seats", "Seats (10)");
+  if(p.uiSelection === "valves") return renderComponentList(p, "valves", "Valves (10)");
+  if(p.uiSelection === "hardPackings") return renderComponentList(p, "hardPackings", "Hard Packings (5)");
+  if(p.uiSelection === "softPackings") return renderComponentList(p, "softPackings", "Soft Packings (5)");
+  return renderComponentList(p, "fuelFilters", "Fuel Filters (6)");
+}
+
+function renderPumpCard(p){
+  const totalNow = currentTotal(p);
+  const w = classifyMaintenance(p);
+  const pumpLabel = p.pumpName ? p.pumpName : `Pump ${p.id}`;
+  const recent = p.events.slice(0, 5).map(e => `
+    <div class="logline">
+      <div><strong>Stage ${e.stage}</strong> • ${e.type} • ${nowStr(e.ts)}</div>
+      <div class="muted">${e.by ? `by ${e.by} • ` : ""}${e.comment || ""}</div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="pump-card ${statusClass(p)} ${warningClass(p)}" draggable="true"
+         ondragstart="onDragStart(${p.id})" ondragend="onDragEnd()">
+      <div><strong>${pumpLabel}</strong> <span class="muted">• (ID ${p.id})</span></div>
+
+      <input class="pump-name-input"
+             value="${p.pumpName || ""}"
+             oninput="editPumpName(${p.id}, this.value)"
+             placeholder="Pump name / SN / asset tag">
+
+      <div>Status: <strong>${p.status}</strong> <span class="muted">${p.statusBy ? `• by ${p.statusBy}` : ""}</span></div>
+      ${p.statusComment ? `<div class="tiny muted">Latest status note: ${p.statusComment}</div>` : ""}
+      <div>Total Hours: <strong id="totalHours-${p.id}">${fmt(totalNow)}</strong></div>
+      <div class="tiny muted">Stage: ${state.stage.number} • Overdue ${w.overdue} • Due soon ${w.soon}</div>
+
+      <div class="row">
+        <button onclick="setStatus(${p.id}, 'Stopped')">Stopped</button>
+        <button onclick="setStatus(${p.id}, 'Offline')">Offline</button>
+        <button onclick="setStatus(${p.id}, 'PulledOut')">Pulled Out</button>
+        <button onclick="backOnline(${p.id})">Back Online</button>
+      </div>
+
+      <div class="row">
+        <select class="move-select" onchange="if(this.value) movePumpToStation(${p.id}, this.value)">
+          <option value="">Move pump to station...</option>
+          ${allStations().filter(s => s.key !== p.stationKey).map(s => `<option value="${s.key}">${s.stationNum ? `Station ${s.stationNum}` : s.name} (${s.key})</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="maint">
+        <div class="maint-header">
+          <div class="tiny">Maintenance view</div>
+          <select onchange="setMaintenanceView(${p.id}, this.value)">
+            <option value="seats" ${p.uiSelection === "seats" ? "selected" : ""}>Seats</option>
+            <option value="valves" ${p.uiSelection === "valves" ? "selected" : ""}>Valves</option>
+            <option value="hardPackings" ${p.uiSelection === "hardPackings" ? "selected" : ""}>Hard Packings</option>
+            <option value="softPackings" ${p.uiSelection === "softPackings" ? "selected" : ""}>Soft Packings</option>
+            <option value="fuelFilters" ${p.uiSelection === "fuelFilters" ? "selected" : ""}>Fuel Filters</option>
+          </select>
+          <div class="tiny muted">Changes: S ${p.shiftCounts.seats} • V ${p.shiftCounts.valves} • HP ${p.shiftCounts.hardPackings} • SP ${p.shiftCounts.softPackings} • FF ${p.shiftCounts.fuelFilters}</div>
+        </div>
+        ${renderSelectedMaintenance(p)}
+      </div>
+
+      <div class="comment-box">
+        <div class="box-title">Comments / Major Issues</div>
+        <textarea class="comment-textarea" oninput="updateCurrentComment(${p.id}, this.value)" placeholder="Write a pump comment here... this can be saved to history.">${p.currentComment || ""}</textarea>
+        <label class="major-flag"><input type="checkbox" ${p.currentCommentMajor ? "checked" : ""} onchange="updateCurrentCommentMajor(${p.id}, this.checked)"> Mark as major issue (Excel export will flag red)</label>
+        <div class="row">
+          <button onclick="saveCommentOnly(${p.id})">Save Comment to History</button>
+        </div>
+      </div>
+
+      <div class="logbox">
+        <div class="tiny muted" style="margin-bottom:6px;">Recent History (saved)</div>
+        ${recent || `<div class="tiny muted">No events yet.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderStation(station){
+  const pump = station.pumpId ? findPump(station.pumpId) : null;
+  const pumpDisplay = pump ? (pump.pumpName ? pump.pumpName : `Pump ${pump.id}`) : "— empty —";
+  const headerTitle = station.stationNum ? `STATION ${station.stationNum}` : `STANDBY`;
+
+  return `
+    <div class="station">
+      <div class="station-header">
+        <div>
+          <div class="station-title">${headerTitle}</div>
+          <div class="station-current">Current Pump: <strong id="currentPump-${station.key}">${pumpDisplay}</strong></div>
+        </div>
+        <div class="station-meta">${station.key}</div>
+      </div>
+
+      <input class="station-name-input"
+             value="${station.name}"
+             oninput="editStationName('${station.key}', this.value)"
+             placeholder="Station name / location name">
+
+      <div class="dropzone"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event, '${station.key}')">
+        ${pump ? renderPumpCard(pump) : `<div class="tiny muted">Drop a pump card here</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function renderTopPanels(){
+  document.getElementById("shiftSummary").innerHTML = `
+    <span>Seats changed: <strong>${state.shift.seats}</strong></span>
+    <span>Valves changed: <strong>${state.shift.valves}</strong></span>
+    <span>Hard packings changed: <strong>${state.shift.hardPackings}</strong></span>
+    <span>Soft packings changed: <strong>${state.shift.softPackings}</strong></span>
+    <span>Fuel filters changed: <strong>${state.shift.fuelFilters}</strong></span>
+  `;
+  document.getElementById("shiftMeta").textContent = `Tracking started: ${nowStr(state.shift.startedAt)}`;
+
+  document.getElementById("stageSummary").innerHTML = `
+    <span>Current stage: <strong>${state.stage.number}</strong></span>
+    <span>Stage notes: <strong>${state.stage.notes.length}</strong></span>
+  `;
+
+  const lastNote = state.stage.notes[0];
+  document.getElementById("stageMeta").textContent = lastNote
+    ? `Last note: ${lastNote.comment} — ${lastNote.by || "?"} @ ${nowStr(lastNote.ts)}`
+    : "No stage notes yet.";
+}
+
+function render(){
+  document.getElementById("allStations").innerHTML = [...state.stations.main, ...state.stations.standby].map(renderStation).join("");
+  renderTopPanels();
+}
+
+function updateLiveTotalsOnly(){
+  state.pumps.forEach(p => {
+    if(!p.running) return;
+    const el = document.getElementById(`totalHours-${p.id}`);
+    if(el) el.textContent = fmt(currentTotal(p));
+  });
+}
+
+function reconcile(){
+  allStations().forEach(st => {
+    if(st.pumpId){
+      const p = findPump(st.pumpId);
+      if(p) p.stationKey = st.key;
+    }
+  });
+
+  state.pumps.forEach(p => {
+    if(!p.stationKey || !findStationByKey(p.stationKey)){
+      const empty = allStations().find(s => !s.pumpId);
+      if(empty){
+        empty.pumpId = p.id;
+        p.stationKey = empty.key;
+      }
+    }
+  });
+
+  save();
+}
+
+function resetAllData(){
+  if(!confirm("This wipes saved data on this browser. Continue?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = {
+    pumps: Array.from({length: pumpCount}, (_, i) => createPump(i+1)),
+    stations: createStations(),
+    stage: { number: 1, notes: [] },
+    shift: { startedAt: Date.now(), seats: 0, valves: 0, hardPackings: 0, softPackings: 0, fuelFilters: 0 },
+    globalEvents: []
+  };
+  reconcile();
+  render();
+}
+
+load();
+reconcile();
+render();
+setInterval(updateLiveTotalsOnly, 1000);
+</script>
+</body>
+</html>
